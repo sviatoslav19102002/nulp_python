@@ -1,0 +1,400 @@
+openapi: 3.0.1
+info:
+  version: "1.0.0"
+  title: Лабораторна робота №5. Варіант 1
+  description: >-
+    Варіант 1. Створити сервіс переказу коштів між користувачами, кожен користувач має власний гаманець та можливість переказувати чи отримувати кошти від іншого користувача.
+servers:
+- url: http://127.0.0.0:5000/api/v1
+tags:
+- name: user
+  description: Operations with users
+- name: wallet
+  description: Operations with wallets
+- name: transfer
+  description: Operations with transfers
+- name: auth
+  description: Authenticating operations
+
+security:
+  - basicAuth: []
+
+paths:
+  /user/{username}:
+    get:
+      tags:
+      - user
+      summary: Get user
+      description: Get information about user
+      operationId: getUserByUsername
+      parameters:
+      - name: username
+        in: path
+        description: 'The name that needs to be fetched'
+        required: true
+        schema:
+          type: string
+          example: "username"
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/InvalidCredentialsError'
+
+
+    put:
+      tags:
+      - user
+      summary: Update user
+      description: Update your user
+      operationId: updateUserByUsername
+
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: "The name that needs to be fetched"
+        schema:
+          type: string
+
+      requestBody:
+        description: Updated user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/InvalidCredentialsError'
+
+
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: Delete user by username
+      operationId: deleteUser
+
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: "The name that needs to be fetched"
+        schema:
+          type: string
+
+      responses:
+        200:
+          description: "Successful operation. User was deleted"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          description: User is not found.
+
+
+  /wallet:
+    post:
+      tags:
+      - wallet
+      summary: Create a wallet
+      operationId: createWallet
+
+      requestBody:
+        description: Wallet object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Wallet'
+        required: true
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        400:
+          $ref: '#/components/responses/IncorrectStructureError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        406:
+          description: Can't create wallet
+
+
+  /wallet/{name}:
+    get:
+      tags:
+      - wallet
+      summary: Get a wallet by name
+      operationId: getWalletByName
+
+      parameters:
+      - name: name
+        in: path
+        required: true
+        description: "The name that needs to be fetched"
+        schema:
+          type: string
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          description: Wallet is not found.
+
+
+    put:
+      tags:
+      - wallet
+      summary: Update a wallet by name
+      operationId: updateWalletByName
+
+      parameters:
+      - name: name
+        in: path
+        required: true
+        description: "The name that needs to be fetched"
+        schema:
+          type: string
+
+      requestBody:
+        description: Updated wallet object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Wallet'
+        required: true
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          description: Wallet is not found.
+        406:
+          description: Can't update wallet
+
+
+    delete:
+      tags:
+      - wallet
+      summary: Delete wallet by name
+      operationId: deleteWalletByName
+
+      parameters:
+      - name: name
+        in: path
+        required: true
+        description: "The name that needs to be fetched"
+        schema:
+          type: string
+
+      responses:
+        200:
+          description: "Successful operation. The wallet was deleted"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          description: Wallet is not found.
+
+
+  /transfer:
+    post:
+      tags:
+      - transfer
+      summary: Create transfer to transfer funds
+      operationId: createTransfer
+
+      requestBody:
+        description: Transfer to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transfer'
+        required: true
+
+      responses:
+        200:
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transfer'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+
+  /auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register new user
+      operationId: registerUser
+
+      requestBody:
+        description: User with data to be registered
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+
+      responses:
+        200:
+          description: "successful operation. User is registered"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: "User with such username already exists"
+
+      security: []
+
+
+  /auth/login:
+    post:
+      tags:
+      - auth
+      summary: Logs in user with provided credentials
+      operationId: loginUser
+
+      parameters:
+      - name: username
+        in: query
+        description: The username
+        required: true
+        schema:
+          type: string
+      - name: password
+        in: query
+        description: The user's password (plain text)
+        required: true
+        schema:
+          type: string
+
+      responses:
+        200:
+          description: "Successful operation. JWT Token is returned"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        401:
+          $ref: '#/components/responses/InvalidCredentialsError'
+
+      security: []
+
+
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      summary: Logs current user out of session
+      operationId: logoutUser
+
+      responses:
+        200:
+          description: "Successful operation"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        amoount:
+          type: integer
+          format: int64
+        owner:
+          type: integer
+          format: int64
+
+    Transfer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        purpose:
+          type: string
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
+        amount:
+          type: integer
+          format: int64
+
+  responses:
+    UnauthorizedError:
+      description: "JWT token was not provided or it is invalid"
+    InvalidCredentialsError:
+      description: "Provided credentials are invalid"
+    IncorrectStructureError:
+      description: "Incorrect structure of request body"
+
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
