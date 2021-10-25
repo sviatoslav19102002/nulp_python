@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/MigrationScript.iml" filepath="$PROJECT_DIR$/.idea/MigrationScript.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Migrations.iml" filepath="$PROJECT_DIR$/.idea/Migrations.iml" />
     </modules>
   </component>
 </project>
