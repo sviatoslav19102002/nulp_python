@@ -1,18 +1,13 @@
 # coding=utf-8
 
-from sqlalchemy import Integer, String, Column, Date, ForeignKey
-from sqlalchemy import create_engine, Integer, String, Column, Date, ForeignKey, Boolean
-
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import Integer, String, Column, Date, ForeignKey
+from sqlalchemy import Integer, String, Column, ForeignKey
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 
 # mysql+pymysql://root:EL_PRESIDENTO@localhost:3306/cash
-engine = create_engine('mysql+pymysql://root:EL_PRESIDENTO@localhost:3306/cash')
+engine = create_engine('mysql+pymysql://root:12345678@127.0.0.1:3306/forppproject')
 
 SessionFactory = sessionmaker(bind=engine)
 
@@ -39,11 +34,11 @@ class Transfer(Base):
     __tablename__ = 'transfer'
     id = Column(Integer, primary_key=True)
     purpose = Column(String(100), nullable=False)
-    fr0m_id = Column(Integer, ForeignKey('user.id'))
-    to_id = Column(Integer, ForeignKey('wallet.id'))
+    fr0m_id = Column(Integer, ForeignKey('wallet.id'), nullable=False)
+    to_id = Column(Integer, ForeignKey('wallet.id'), nullable=False)
     amount = Column(Integer, nullable=False)
-    fr0m = relationship("User")
-    to = relationship("Wallet")
+    fr0m = relationship("Wallet", foreign_keys=[fr0m_id])
+    to = relationship("Wallet", foreign_keys=[to_id])
 
 
 class Wallet(Base):
