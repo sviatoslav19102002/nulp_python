@@ -1,7 +1,6 @@
 from main import Wallet, Transfer, User, Session
 
 
-
 s = Session()
 
 user = User(id = 1, username ="warior", password="123456789",
