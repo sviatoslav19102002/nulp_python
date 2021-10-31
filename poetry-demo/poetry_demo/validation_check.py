@@ -3,17 +3,17 @@ from marshmallow.validate import Length, Range
 
 
 class UserSchema(Schema):
-    first_name = fields.String(required=True, validate=Length(min=3))
-    second_name = fields.String(required=True, validate=Length(min=3))
-    username = fields.String(required=True, validate=Length(min=3))
-    password = fields.String(required=True, validate=Length(min=6))
-    email = fields.Email(required=True)
+    first_name = fields.String(validate=Length(min=3))
+    second_name = fields.String(validate=Length(min=3))
+    username = fields.String(validate=Length(min=3))
+    password = fields.String(validate=Length(min=6))
+    email = fields.Email()
 
 
 class WalletSchema(Schema):
-    name = fields.String(required=True, validate=Length(min=3))
+    name = fields.String(validate=Length(min=3))
     amount = fields.Integer(strict=True)
-    owner_id = fields.Integer(required=True, strict=True)
+    owner_id = fields.Integer(strict=True)
 
 
 class TransferSchema(Schema):
