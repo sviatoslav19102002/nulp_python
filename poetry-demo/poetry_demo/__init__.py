@@ -80,21 +80,26 @@ def update_user(username):
         return Response(status=404, response='A user with provided username was not found.')
 
     # Check if username or email is not taken if user tries to change it
-    if db_user.username != data['username']:
+    if 'username' in data.keys() and db_user.username != data['username']:
         exists = session.query(User.id).filter_by(username=data['username']).first()
         if exists:
             return Response(status=400, response='User with such username already exists.')
-    if db_user.email != data['email']:
+    if 'email' in data.keys() and db_user.email != data['email']:
         exists2 = session.query(User.id).filter_by(email=data['email']).first()
         if exists2:
             return Response(status=400, response='User with such email already exists.')
     # Change user data
-    db_user.first_name = data['first_name']
-    db_user.second_name = data['second_name']
-    hashed_password = bcrypt.generate_password_hash(data['password'])
-    db_user.password = hashed_password
-    db_user.username = data['username']
-    db_user.email = data['email']
+    if 'first_name' in data.keys():
+        db_user.first_name = data['first_name']
+    if 'second_name' in data.keys():
+        db_user.second_name = data['second_name']
+    if 'password' in data.keys():
+        hashed_password = bcrypt.generate_password_hash(data['password'])
+        db_user.password = hashed_password
+    if 'username' in data.keys():
+        db_user.username = data['username']
+    if 'email' in data.keys():
+        db_user.email = data['email']
 
     # Save changes
     session.commit()
@@ -180,17 +185,19 @@ def update_wallet(name):
         return Response(status=404, response='A wallet with provided name was not found.')
 
     # Check if name of wallet is not taken if user tries to change it
-    if db_wallet.name != data['name']:
+    if 'name' in data.keys() and db_wallet.name != data['name']:
         exists = session.query(Wallet.id).filter_by(name=data['name']).first()
         if exists:
             return Response(status=400, response='Wallet with such name already exists.')
     # Change wallet data
-    if db_wallet.owner_id != data['owner_id']:
+    if 'owner_id' in data.keys() and db_wallet.owner_id != data['owner_id']:
         exists2 = session.query(User.id).filter_by(id=data['owner_id']).first()
         if not exists2:
             return Response(status=400, response='There is not user with such ID.')
-    db_wallet.name = data['name']
-    db_wallet.owner_id = data['owner_id']
+    if 'name' in data.keys():
+        db_wallet.name = data['name']
+    if 'owner_id' in data.keys():
+        db_wallet.owner_id = data['owner_id']
 
     # Save changes
     session.commit()
