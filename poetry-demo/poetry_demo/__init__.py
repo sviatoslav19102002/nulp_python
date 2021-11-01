@@ -74,7 +74,7 @@ def update_user(username):
     except ValidationError as err:
         return jsonify(err.messages), 400
 
-    # Check if wallet exists
+    # Check if user exists
     db_user = session.query(User).filter_by(username=username).first()
     if not db_user:
         return Response(status=404, response='A user with provided username was not found.')
@@ -196,6 +196,8 @@ def update_wallet(name):
             return Response(status=400, response='There is not user with such ID.')
     if 'name' in data.keys():
         db_wallet.name = data['name']
+    if 'amount' in data.keys():
+        db_wallet.amount = data['amount']
     if 'owner_id' in data.keys():
         db_wallet.owner_id = data['owner_id']
 
@@ -259,5 +261,3 @@ def create_transfer():
 
 
 serve(app, host='0.0.0.0', port=8080, threads=1) #WAITRESS!
-
-
