@@ -2,24 +2,48 @@ __version__ = '0.1.0'
 
 #from flask import Flask
 import flask
+from flask_httpauth import HTTPBasicAuth
 from flask import Flask, request, Response, jsonify
 from flask_bcrypt import Bcrypt
 import sys
-sys.path.append('/Users/orestchukla/Desktop/sviatproject/nulp_python/poetry-demo/Migrations')
-from main import Session, User, Wallet, Transfer
-sys.path.append('/Users/orestchukla/Desktop/sviatproject/nulp_python/poetry-demo/poetry_demo')
+sys.path.append('C://Users//Sviatoslav Oliinyk//Desktop//NULPSecondCourse//PP//lab8//nulp_python//poetry-demo//Migrations')
+from Migrations.main import Session, User, Wallet, Transfer
+sys.path.append('C://Users//Sviatoslav Oliinyk//Desktop//NULPSecondCourse//PP//lab8//nulp_python//poetry-demo//poetry_demo')
 from validation_check import UserSchema, WalletSchema, TransferSchema
 from waitress import serve
 from marshmallow import ValidationError
 app = Flask(__name__)
 session = Session()
 bcrypt = Bcrypt()
+auth = HTTPBasicAuth()
 
+# currentUser=[]
+@auth.verify_password
+def verify_password(username, password):
+    try:
+        user = session.query(User).filter_by(username=username).first()
+        if user and bcrypt.check_password_hash(user.password, password):
+            return username
+    except:
+        return None
 
 @app.route('/api/v1/hello-world-15')
+@auth.login_required
 def myendpoint():
     status_code = flask.Response(status=200, response="Hello World 15")
     return status_code
+
+# @app.route('/api/v1/auth/login', methods=['POST'])
+# def login():
+#     # data = request.get_json()
+#     # currentUser.append(data['username'])
+#     # currentUser.append(bcrypt.generate_password_hash(data['password']))
+#     return Response(response='Credentials was successfully added!')
+
+
+# @app.route('/api/v1/auth/logout', methods=['POST'])
+# def logout():
+#     currentUser=[]
 
 
 @app.route('/api/v1/auth/register', methods=['POST'])
@@ -52,7 +76,11 @@ def register():
 
 
 @app.route('/api/v1/user/<username>', methods=['GET'])
+@auth.login_required
 def get_user(username):
+    if(auth.username()!=username):
+        return Response(status=406, response='Access denied')
+
     # Check if user exists
     db_user = session.query(User).filter_by(username=username).first()
     if not db_user:
@@ -64,7 +92,10 @@ def get_user(username):
 
 
 @app.route('/api/v1/user/<username>', methods=['PUT'])
+@auth.login_required
 def update_user(username):
+    if(auth.username()!=username):
+        return Response(status=406, response='Access denied')
     # Get data from request body
     data = request.get_json()
 
@@ -110,7 +141,10 @@ def update_user(username):
 
 
 @app.route('/api/v1/user/<username>', methods=['DELETE'])
+@auth.login_required
 def delete_user(username):
+    if(auth.username()!=username):
+        return Response(status=406, response='Access denied')
     # Check if user exists
     db_user = session.query(User).filter_by(username=username).first()
     if not db_user:
@@ -123,10 +157,13 @@ def delete_user(username):
 
 
 @app.route('/api/v1/wallet', methods=['POST'])
+@auth.login_required
 def create_wallet():
     # Get data from request body
     data = request.get_json()
-
+    user = session.query(User).filter_by(username=auth.username()).first()
+    if(user.id!=data['owner_id']):
+        return Response(status=406, response='Access denied')
     # Validate input data
     try:
         WalletSchema().load(data)
@@ -156,12 +193,16 @@ def create_wallet():
 
 
 @app.route('/api/v1/wallet/<name>', methods=['GET'])
+@auth.login_required
 def get_wallet(name):
     # Check if wallet exists
     db_wallet = session.query(Wallet).filter_by(name=name).first()
     if not db_wallet:
         return Response(status=404, response='A wallet with provided name was not found.')
 
+    user = session.query(User).filter_by(username=auth.username).first()
+    if(user.id!=db_wallet.owner_id):
+        return Response(status=406, response='Access denied')
     # Return wallet data
     db_user = session.query(User).filter_by(id=db_wallet.owner_id).first()
     wallet_data = {'id': db_wallet.id, 'name': db_wallet.name, 'amount': db_wallet.amount, 'owner_username': db_user.username}
@@ -169,10 +210,13 @@ def get_wallet(name):
 
 
 @app.route('/api/v1/wallet/<name>', methods=['PUT'])
+@auth.login_required
 def update_wallet(name):
     # Get data from request body
     data = request.get_json()
-
+    user = session.query(User).filter_by(username=auth.username).first()
+    if(user.id!=data['owner_id']):
+        return Response(status=406, response='Access denied')
     # Validate input data
     try:
         WalletSchema().load(data)
@@ -211,12 +255,15 @@ def update_wallet(name):
 
 
 @app.route('/api/v1/wallet/<name>', methods=['DELETE'])
+@auth.login_required
 def delete_wallet(name):
     # Check if wallet exists
     db_wallet = session.query(Wallet).filter_by(name=name).first()
     if not db_wallet:
         return Response(status=404, response='A wallet with provided name was not found.')
-
+    user = session.query(User).filter_by(username=auth.username).first()
+    if(user.id!=db_wallet.owner_id):
+        return Response(status=406, response='Access denied')
     # Delete wallet
     session.delete(db_wallet)
     session.commit()
@@ -224,6 +271,7 @@ def delete_wallet(name):
 
 
 @app.route('/api/v1/transfer', methods=['POST'])
+@auth.login_required
 def create_transfer():
     data = request.get_json()
 
@@ -232,6 +280,11 @@ def create_transfer():
         TransferSchema().load(data)
     except ValidationError as err:
         return jsonify(err.messages), 400
+    
+    user = session.query(User).filter_by(username=auth.username()).first()
+    wallet = session.query(Wallet).filter_by(id=data['fr0m_id']).first()
+    if(user.id!=wallet.owner_id):
+        return Response(status=406, response='Access denied')
 
     # Check if from and to wallets are not the same
     if data['fr0m_id'] == data['to_id']:
