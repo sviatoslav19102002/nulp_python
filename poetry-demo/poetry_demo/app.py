@@ -6,9 +6,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask import Flask, request, Response, jsonify
 from flask_bcrypt import Bcrypt
 import sys
-sys.path.append('C://Users//Sviatoslav Oliinyk//Desktop//NULPSecondCourse//PP//lab8//nulp_python//poetry-demo//Migrations')
 from Migrations.main import Session, User, Wallet, Transfer
-sys.path.append('C://Users//Sviatoslav Oliinyk//Desktop//NULPSecondCourse//PP//lab8//nulp_python//poetry-demo//poetry_demo')
 from validation_check import UserSchema, WalletSchema, TransferSchema
 from waitress import serve
 from marshmallow import ValidationError
@@ -22,7 +20,8 @@ auth = HTTPBasicAuth()
 def verify_password(username, password):
     try:
         user = session.query(User).filter_by(username=username).first()
-        if user and bcrypt.check_password_hash(user.password, password):
+        #if user and bcrypt.check_password_hash(user.password, password):
+        if user and user.password == password:
             return username
     except:
         return None
@@ -55,7 +54,7 @@ def register():
     try:
         UserSchema().load(data)
     except ValidationError as err:
-        return jsonify(err.messages), 400
+        return jsonify(err.messages), 401
 
     # Check if user already exists
     exists = session.query(User.id).filter_by(username=data['username']).first()
@@ -200,7 +199,7 @@ def get_wallet(name):
     if not db_wallet:
         return Response(status=404, response='A wallet with provided name was not found.')
 
-    user = session.query(User).filter_by(username=auth.username).first()
+    user = session.query(User).filter_by(username=auth.username()).first()
     if(user.id!=db_wallet.owner_id):
         return Response(status=406, response='Access denied')
     # Return wallet data
@@ -214,7 +213,7 @@ def get_wallet(name):
 def update_wallet(name):
     # Get data from request body
     data = request.get_json()
-    user = session.query(User).filter_by(username=auth.username).first()
+    user = session.query(User).filter_by(username=auth.username()).first()
     if(user.id!=data['owner_id']):
         return Response(status=406, response='Access denied')
     # Validate input data
@@ -261,7 +260,7 @@ def delete_wallet(name):
     db_wallet = session.query(Wallet).filter_by(name=name).first()
     if not db_wallet:
         return Response(status=404, response='A wallet with provided name was not found.')
-    user = session.query(User).filter_by(username=auth.username).first()
+    user = session.query(User).filter_by(username=auth.username()).first()
     if(user.id!=db_wallet.owner_id):
         return Response(status=406, response='Access denied')
     # Delete wallet
@@ -280,6 +279,12 @@ def create_transfer():
         TransferSchema().load(data)
     except ValidationError as err:
         return jsonify(err.messages), 400
+
+    # Check if wallets exists
+    wallet_from = session.query(Wallet).filter_by(id=data['fr0m_id']).first()
+    wallet_to = session.query(Wallet).filter_by(id=data['to_id']).first()
+    if not wallet_from or not wallet_to:
+        return Response(status=400, response='Wallet with such id does not exist.')
     
     user = session.query(User).filter_by(username=auth.username()).first()
     wallet = session.query(Wallet).filter_by(id=data['fr0m_id']).first()
@@ -289,12 +294,6 @@ def create_transfer():
     # Check if from and to wallets are not the same
     if data['fr0m_id'] == data['to_id']:
         return Response(status=400, response='You can not send money to the same wallet.')
-
-    # Check if wallets exists
-    wallet_from = session.query(Wallet).filter_by(id=data['fr0m_id']).first()
-    wallet_to = session.query(Wallet).filter_by(id=data['to_id']).first()
-    if not wallet_from or not wallet_to:
-        return Response(status=400, response='Wallet with such id does not exist.')
 
     if data['amount'] > wallet_from.amount:
         return Response(status=400, response='There is not necessary amount of money.')
@@ -313,4 +312,4 @@ def create_transfer():
     return Response(response='New transfer was successfully created!')
 
 
-serve(app, host='0.0.0.0', port=8080, threads=1) #WAITRESS!
+serve(app, port=8081) #WAITRESS!
